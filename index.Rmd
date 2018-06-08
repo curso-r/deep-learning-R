@@ -1,0 +1,441 @@
+---
+title: "Deep Learning e R"
+author: "Daniel Falbel (@Curso-R) <br> dfalbel@curso-r.com"
+date: "24/05/2018"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "js/macros.js"
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+## Oi!
+
+- Bacharel em Estatística (2015)
+
+- Sócio da [Curso-R](http://curso-r.com)
+
+- Sócio da [R6](http://rseis.com.br)
+
+---
+
+## TensorFlow
+
+É uma biblioteca geral de computação numérica.
+
+- Desenvolvida dentro da Google Brain para pesquisas em Redes Neurais
+- Open Source
+- Diferencição Automática
+
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/AutomaticDifferentiationNutshell.png/1280px-AutomaticDifferentiationNutshell.png)
+
+---
+
+## Tensores
+
+(2d)
+
+```{r}
+head(data.matrix(iris), 10)
+```
+
+---
+
+
+## Tensores 
+
+(3d)
+
+![:scale 50%](3d-tensor.png)
+
+---
+
+## Tensores 
+
+(4d)
+
+![:scale 50%](4d-tensor.png)
+
+---
+
+## TensorFlow
+
+.pull-left[
+  ![](flow.gif)
+]
+
+.pull-right[
+  - Definimos o grafo
+  - o Grafo é compilado e otimizado
+  - O grafo é executado
+  - Os nós representam cálculos
+  - Os tensores *fluem* entre os nós.
+]
+
+---
+
+## Keras
+
+* Uma API que permite especificar modelos de *Deep Learning* de forma intuitiva e rápida.
+
+* Criada por François Chollet (@fchollet).
+
+![:scale 40%](https://pbs.twimg.com/profile_images/831025272589676544/3g6BrXCE_400x400.jpg)
+
+* Originalmente implementada em `python`.
+
+---
+
+## Keras
+
+* Uma API com múltiplas implementações.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("keras.svg")
+```
+
+---
+
+## Keras + R
+
+* Pacote do R: [`keras`](https://github.com/rstudio/keras).
+
+* Baseado em [reticulate](https://github.com/rstudio/reticulate).
+
+* Desenvolvido pelo JJ Allaire (CEO do RStudio).
+
+* Tem uma sintaxe R-like com uso de `%>%`.
+
+![:scale 70%](https://i.ytimg.com/vi/D8yF9AtTTuQ/maxresdefault.jpg)
+
+---
+class: inverse, middle, center
+
+## Exemplo
+
+### [Classifying duplicate questions from Quora with Keras](https://tensorflow.rstudio.com/blog/keras-duplicate-questions-quora.html)
+
+---
+
+![:scale 50%](https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Quora_logo_2015.svg/2000px-Quora_logo_2015.svg.png)
+
+* [Quora](https://www.quora.com): site de perguntas e respostas de âmbito geral.
+
+* Para quem usa o Quora, é melhor ter apenas uma versão de uma pergunta.
+
+* Banco de dados de uma [competição do Kaggle](https://www.kaggle.com/c/quora-question-pairs).
+
+* ~400k pares de perguntas duplicadas (ou não) marcadas pelos moderadores do site.
+
+* **Objetivo:** Identificar os pares de perguntas que possuem o mesmo _significado_.
+
+* Antes da competição o problema era resolvido com Random Forests, depois passaram a usar [Deep Learning](https://engineering.quora.com/Semantic-Question-Matching-with-Deep-Learning).
+
+---
+
+### Duplicadas
+
+<div>
+.pull-left[
+  * How can I be a good geologist?
+  
+  
+  * How do I read and find my YouTube comments? 
+  
+  * What can make Physics easy to learn?  
+]
+
+.pull-right[
+  - What should I do to be a great geologist? 
+  
+  
+  - How can I see all my Youtube comments?
+  
+  - How can you make physics easy to learn? 
+]
+</div>
+
+
+### Não-Duplicadas
+
+<div>
+.pull-left[
+  * How can I increase the speed of my internet connection while using a VPN?	
+  
+  
+  * What is the step by step guide to invest in share market in india?
+  
+  * How do I get over my ex's past?	
+
+]
+
+.pull-right[
+  * How can Internet speed be increased by hacking through DNS?
+  
+  
+  * What is the step by step guide to invest in share market?
+  
+  * What is the best way to get over your ex?	
+]
+</div>
+
+---
+
+## Arquitetura do modelo
+
+<br>
+<br>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("modelo-esquema.svg")
+```
+
+* Siamese LSTM
+
+---
+
+#### Embedding
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("embedding.svg")
+```
+
+---
+
+## LSTM
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("lstm.svg")
+```
+
+---
+
+## LSTM
+
+
+![](https://mlalgorithm.files.wordpress.com/2016/08/rnn1.jpg?w=571&h=283)
+
+---
+
+## Arquitetura no Keras
+
+<br>
+<br>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("modelo-keras.svg")
+```
+
+---
+
+## Código
+
+```{r, eval = FALSE}
+library(keras)
+```
+
+--
+
+```{r, eval = FALSE}
+input1 <- layer_input(shape = c(20), name = "input_question1")
+input2 <- layer_input(shape = c(20), name = "input_question2")
+```
+
+--
+
+```{r, eval = FALSE}
+word_embedder <- layer_embedding( 
+  input_dim = 50000,     # vocab size 
+  output_dim = 128,      # hyperparameter - embedding size
+  input_length = 20     # padding size
+)
+```
+
+--
+
+```{r, eval = FALSE}
+seq_embedder <- layer_lstm(units = 128)
+```
+
+--
+
+```{r, eval = FALSE}
+vector1 <- input1 %>% word_embedder() %>% seq_embedder()
+vector2 <- input2 %>% word_embedder() %>% seq_embedder()
+```
+
+--
+
+```{r}
+#> Tensor("lstm_1/TensorArrayReadV3:0", shape=(?, 128), dtype=float32)
+#> Tensor("lstm_1_1/TensorArrayReadV3:0", shape=(?, 128), dtype=float32)
+```
+
+---
+
+## Arquitetura do Modelo
+
+<br>
+<br>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("modelo-keras.svg")
+```
+
+---
+
+## Código
+
+```{r, eval = FALSE}
+cosine_similarity <- layer_dot(list(vector1, vector2), axes = 1)
+```
+
+--
+
+```{r, eval = FALSE}
+output <- cosine_similarity %>% 
+  layer_dense(units = 1, activation = "sigmoid")
+```
+
+--
+
+```{r, eval = FALSE}
+model <- keras_model(list(input1, input2), output)
+model %>% compile(
+  optimizer = "adam", 
+  metrics = list(acc = metric_binary_accuracy), 
+  loss = "binary_crossentropy"
+)
+```
+
+---
+
+```{r, eval = FALSE}
+summary(model)
+```
+
+```{r, eval = FALSE}
+# _______________________________________________________________________________________
+# Layer (type)                Output Shape       Param #    Connected to                 
+# =======================================================================================
+# input_question1 (InputLayer (None, 20)         0                                       
+# _______________________________________________________________________________________
+# input_question2 (InputLayer (None, 20)         0                                       
+# _______________________________________________________________________________________
+# embedding_1 (Embedding)     (None, 20, 128)    6400256    input_question1[0][0]        
+#                                                           input_question2[0][0]        
+# _______________________________________________________________________________________
+# lstm_1 (LSTM)               (None, 128)        131584     embedding_1[0][0]            
+#                                                           embedding_1[1][0]            
+# _______________________________________________________________________________________
+# dot_1 (Dot)                 (None, 1)          0          lstm_1[0][0]                 
+#                                                           lstm_1[1][0]                 
+# _______________________________________________________________________________________
+# dense_1 (Dense)             (None, 1)          2          dot_1[0][0]                  
+# =======================================================================================
+# Total params: 6,531,842
+# Trainable params: 6,531,842
+# Non-trainable params: 0
+# _______________________________________________________________________________________
+```
+
+---
+
+## Treinando
+
+```{r, eval = FALSE}
+model %>% fit(
+  list(train_question1_padded, train_question2_padded),
+  train_is_duplicate, 
+  batch_size = 64, 
+  epochs = 10, 
+  validation_data = list(
+    list(val_question1_padded, val_question2_padded), 
+    val_is_duplicate
+  )
+)
+```
+
+```{r}
+# Train on 363861 samples, validate on 40429 samples
+# Epoch 1/10
+# 363861/363861 [==============================] - 89s 245us/step - loss: 0.5860 - acc: 0.7248 - val_loss: 0.5590 - val_acc: 0.7449
+# Epoch 2/10
+# 363861/363861 [==============================] - 88s 243us/step - loss: 0.5528 - acc: 0.7461 - val_loss: 0.5472 - val_acc: 0.7510
+# Epoch 3/10
+# 363861/363861 [==============================] - 88s 242us/step - loss: 0.5428 - acc: 0.7536 - val_loss: 0.5439 - val_acc: 0.7515
+```
+
+---
+
+## Algumas aplicações
+
+### [Show and Tell](https://ai.googleblog.com/2016/09/show-and-tell-image-captioning-open.html)
+
+
+![](https://1.bp.blogspot.com/-gmCkHgRKbp0/V-L9sTZuevI/AAAAAAAABPE/0Im_E8pWqGoS3eC90DpYHS17vuFgLBh5gCLcB/s640/Caption3c.png)
+
+---
+
+### [Zero Shot Translation](https://ai.googleblog.com/2016/11/zero-shot-translation-with-googles.html)
+
+![](https://1.bp.blogspot.com/-jwgtcgkgG2o/WDSBrwu9jeI/AAAAAAAABbM/2Eobq-N9_nYeAdeH-sB_NZGbhyoSWgReACLcB/s640/image01.gif)
+
+---
+
+### [Speech Generation](https://google.github.io/tacotron/publications/tacotron2/index.html)
+
+![](https://3.bp.blogspot.com/-0TuzPYkfecA/WlaSABCyRnI/AAAAAAAACTo/Z41PW_uqHsAiw6ZydxPO5pyDnU5ft8K6wCLcBGAs/s640/image11.png)
+
+---
+
+### [The Case for Learned Index Structures](https://arxiv.org/abs/1712.01208)
+
+![](https://1.bp.blogspot.com/-5jKNnxvbamI/WlaSQr08plI/AAAAAAAACTw/Tq68VrmBqqcg1QDEMlj4oGn_MMTOCV8UgCLcBGAs/s640/image5.png)
+
+---
+
+## Discussão: Por que nós estatísticos ligamos para Deep Learning?
+
+Novos problemas:
+
+- Visão computacional
+- Reconhecimento de fala
+
+Melhorar em alguns problemas tradicionais?
+
+- Analisar dados de sequeências complexas
+- Analisar dados espaciais
+- ? 
+
+---
+
+## Mais
+
+* [Galeria de exemplos do Keras](https://keras.rstudio.com/articles/examples/index.html).
+* [Livro: Deep Learning com R](https://www.amazon.com/Deep-Learning-R-Francois-Chollet/dp/161729554X)
+* [Blog: Tensorflow for R](https://tensorflow.rstudio.com/blog.html)
+* [Deep Learning Book](http://www.deeplearningbook.org)
+
+![](https://naweb.files.wordpress.com/2012/04/gato-lendo-livroa.gif)
+
+---
+class: inverse, middle, center
+
+## Obrigado
+
+dfalbel@curso-r.com
+
+github.com/dfalbel
+
+
+
+
+
